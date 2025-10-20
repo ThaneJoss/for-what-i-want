@@ -61,7 +61,7 @@ def main():
     # 使用 .iterdir() 遍历目录中的所有条目
     for task_file_path in source_dir.iterdir():
         # 确保处理的是文件
-        if not task_file_path.is_file():
+        if not task_file_path.is_file() or not task_file_path.suffix == ".txt":
             continue
 
         # 读取文件内容作为源镜像名，并去除首尾空白

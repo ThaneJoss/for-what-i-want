@@ -46,7 +46,7 @@ jobs:
         id: sync # 为此步骤设置ID，方便后续步骤引用其输出
         env:
           # 通过环境变量将配置和密钥传递给 Python 脚本
-          SOURCE_DIR: "this is what i want"
+          SOURCE_DIR: "./"
           OUTPUT_DIR: "got it"
           PRIVATE_REGISTRY: ${{ secrets.PRIVATE_REGISTRY }}
           PRIVATE_REGISTRY_NAMESPACE: ${{ secrets.PRIVATE_REGISTRY_NAMESPACE }}
@@ -61,7 +61,7 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-          git add 'got it/' 'this is what i want/'
+          git add './'
 
           # 检查是否存在暂存的变更，避免创建空提交
           if ! git diff --staged --quiet; then
