@@ -18,6 +18,8 @@ jobs:
     name: 处理镜像同步队列
     # 运行环境
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     # 任务步骤
     steps:
       # 步骤 1: 检出代码
@@ -38,8 +40,6 @@ jobs:
       # 新增步骤: 设置 Python 环境
       - name: ③ 设置 Python 环境
         uses: actions/setup-python@v5
-        with:
-          python-version: "3.10" # 您可以选择一个合适的 Python 版本
 
       # 步骤 4: 核心处理逻辑 (现在调用 Python 脚本)
       - name: ④ 执行镜像同步脚本
@@ -49,6 +49,8 @@ jobs:
           SOURCE_DIR: "this is what i want"
           OUTPUT_DIR: "got it"
           PRIVATE_REGISTRY: ${{ secrets.PRIVATE_REGISTRY }}
+          PRIVATE_REGISTRY_NAMESPACE: ${{ secrets.PRIVATE_REGISTRY_NAMESPACE }}
+
         run: python .github/scripts/main.py
 
       # 步骤 5: 提交变更
@@ -59,12 +61,11 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-          # git add 会智能处理新增（got it/）和删除（this is what i want/）的文件
           git add 'got it/' 'this is what i want/'
 
           # 检查是否存在暂存的变更，避免创建空提交
           if ! git diff --staged --quiet; then
-            git commit -m "ci: 自动处理镜像同步任务" -m "处理 'this is what i want/' 目录中的任务并归档拉取指令。[skip ci]"
+            git commit -m "🤖：成功转发镜像"
             git push
             echo "🎉 变更已成功提交回仓库！"
           else

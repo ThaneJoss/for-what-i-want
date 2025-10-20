@@ -38,9 +38,10 @@ def main():
     source_dir_str = os.getenv("SOURCE_DIR", "this is what i want")
     output_dir_str = os.getenv("OUTPUT_DIR", "got it")
     private_registry = os.getenv("PRIVATE_REGISTRY")
+    private_registry_namespace = os.getenv("PRIVATE_REGISTRY_NAMESPACE")
 
-    if not private_registry:
-        print("❌ 错误: 环境变量 'PRIVATE_REGISTRY' 未设置。", file=sys.stderr)
+    if not private_registry or not private_registry_namespace:
+        print("❌ 错误: 环境变量 'PRIVATE_REGISTRY' 或 'PRIVATE_REGISTRY_NAMESPACE' 未设置。", file=sys.stderr)
         sys.exit(1)
 
     source_dir = Path(source_dir_str)
@@ -72,8 +73,9 @@ def main():
 
         print("=" * 60)
         print(f"🔵 开始处理任务: {source_image}")
-        destination_image = f"{private_registry}/{source_image}"
-
+        image_parts = source_image.split('/')
+        image_name_with_tag = image_parts[-1]
+        destination_image = f"{private_registry}/{private_registry_namespace}/{image_name_with_tag}"
         # --- 4. Docker 操作 ---
         # 链式操作，任何一步失败则跳过当前任务
         print(f"   - 下载中: {source_image}")
@@ -85,7 +87,9 @@ def main():
         if not run_command(["docker", "tag", source_image, destination_image]):
             print("   ❌ 错误: 标记失败，任务将保留。")
             continue
-        
+
+        print(f"   - [调试信息] 准备推送的完整镜像名是: {destination_image}")
+
         print(f"   - 推送中: {destination_image}")
         if not run_command(["docker", "push", destination_image]):
             print("   ❌ 错误: 推送失败，任务将保留。")
