@@ -1,0 +1,72 @@
+# .github/workflows/image-sync.yml
+
+# 工作流名称：镜像同步处理器
+# 功能：自动拉取、标记并推送到私有仓库，然后归档任务记录。
+name: 镜像同步处理器
+
+# 触发条件：当 'this is what i want/' 目录下的内容发生变化时，在 main 分支上触发
+on:
+  push:
+    branches:
+      - main
+
+# 定义任务
+jobs:
+  # 任务ID：process-sync-queue
+  process-sync-queue:
+    # 任务显示名称
+    name: 处理镜像同步队列
+    # 运行环境
+    runs-on: ubuntu-latest
+    # 任务步骤
+    steps:
+      # 步骤 1: 检出代码
+      # 使用 PAT (Personal Access Token) 以确保后续有权限推送变更回仓库
+      - name: ① 检出代码仓库
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 步骤 2: 登录私有镜像仓库
+      - name: ② 登录私有 Docker 仓库
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.PRIVATE_REGISTRY }}
+          username: ${{ secrets.PRIVATE_REGISTRY_USERNAME }}
+          password: ${{ secrets.PRIVATE_REGISTRY_PASSWORD }}
+
+      # 新增步骤: 设置 Python 环境
+      - name: ③ 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10" # 您可以选择一个合适的 Python 版本
+
+      # 步骤 4: 核心处理逻辑 (现在调用 Python 脚本)
+      - name: ④ 执行镜像同步脚本
+        id: sync # 为此步骤设置ID，方便后续步骤引用其输出
+        env:
+          # 通过环境变量将配置和密钥传递给 Python 脚本
+          SOURCE_DIR: "this is what i want"
+          OUTPUT_DIR: "got it"
+          PRIVATE_REGISTRY: ${{ secrets.PRIVATE_REGISTRY }}
+        run: python .github/scripts/main.py
+
+      # 步骤 5: 提交变更
+      # 逻辑不变，仅当上一步（id: sync）确实处理了文件时才运行
+      - name: ⑤ 提交处理结果
+        if: steps.sync.outputs.has_processed_files == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # git add 会智能处理新增（got it/）和删除（this is what i want/）的文件
+          git add 'got it/' 'this is what i want/'
+
+          # 检查是否存在暂存的变更，避免创建空提交
+          if ! git diff --staged --quiet; then
+            git commit -m "ci: 自动处理镜像同步任务" -m "处理 'this is what i want/' 目录中的任务并归档拉取指令。[skip ci]"
+            git push
+            echo "🎉 变更已成功提交回仓库！"
+          else
+            echo "ℹ️ 无变更需要提交。"
+          fi
