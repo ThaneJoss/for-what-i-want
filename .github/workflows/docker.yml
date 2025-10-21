@@ -1,10 +1,5 @@
-# .github/workflows/image-sync.yml
-
-# 工作流名称：镜像同步处理器
-# 功能：自动拉取、标记并推送到私有仓库，然后归档任务记录。
 name: 镜像同步处理器
 
-# 触发条件：当 'this is what i want/' 目录下的内容发生变化时，在 main 分支上触发
 on:
   push:
     branches:
@@ -40,6 +35,9 @@ jobs:
       # 新增步骤: 设置 Python 环境
       - name: ③ 设置 Python 环境
         uses: actions/setup-python@v5
+
+        with:
+          python-version: "3.13"
 
       # 步骤 4: 核心处理逻辑 (现在调用 Python 脚本)
       - name: ④ 执行镜像同步脚本
