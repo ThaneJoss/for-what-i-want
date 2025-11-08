@@ -1,0 +1,1 @@
+docker pull crpi-e25xmyvw90r5viqq.cn-hongkong.personal.cr.aliyuncs.com/hkcon/ros:humble-desktop
